@@ -14,17 +14,17 @@ import { AsistenteIaModule } from './asistente-ia/asistente-ia.module';
   imports: [
     // Infraestructura
     PrismaModule,
-    // Ya construido (M3, reusado)
+    // Autenticación
     AuthModule,
-    // Funcional desde C1
+    // Negocio (tenant)
     NegociosModule,
-    // Funcional hoy (C2): perfiles, configuración, relaciones avanzadas y la reserva
+    // Dominio
     PerfilesModule,
     ConfiguracionModule,
     ServiciosModule,
     ProfesionalesModule,
     CitasModule,
-    // Esqueleto — se construyen en C3
+    // Monetización e IA
     SuscripcionesModule,
     AsistenteIaModule,
   ],

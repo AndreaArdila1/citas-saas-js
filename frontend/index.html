@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AgendaFácil</title>
+<style>
+  :root{
+    --morado:#5418CC; --morado2:#6018F0; --oscuro:#3C1884;
+    --texto:#1A1A1A; --suave:#F5F3FB; --borde:#e5e0f2; --ok:#12813f; --err:#c0261e; --gris:#6b6b7b;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--suave);color:var(--texto)}
+  header{background:var(--morado);color:#fff;padding:14px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  header h1{font-size:18px;margin:0;font-weight:700}
+  header .sp{flex:1}
+  .api{display:flex;align-items:center;gap:6px;font-size:12px}
+  .api input{padding:5px 8px;border-radius:6px;border:1px solid #ffffff55;background:#ffffff22;color:#fff;width:190px}
+  .api input::placeholder{color:#ffffffaa}
+  .dot{width:9px;height:9px;border-radius:50%;background:#f0c000;display:inline-block}
+  .dot.on{background:#43e08a}.dot.off{background:#ff6b6b}
+  .wrap{max-width:1000px;margin:20px auto;padding:0 16px}
+  .card{background:#fff;border:1px solid var(--borde);border-radius:12px;padding:18px;margin-bottom:16px}
+  .card h2{margin:0 0 12px;font-size:16px;color:var(--oscuro)}
+  .card h3{margin:16px 0 8px;font-size:13px;color:var(--morado);text-transform:uppercase;letter-spacing:.5px}
+  label{display:block;font-size:12px;color:var(--gris);margin:8px 0 3px}
+  input,select,textarea{width:100%;padding:9px 10px;border:1px solid var(--borde);border-radius:8px;font-size:14px;font-family:inherit}
+  .row{display:flex;gap:10px;flex-wrap:wrap}.row>div{flex:1;min-width:130px}
+  button{background:var(--morado);color:#fff;border:0;border-radius:8px;padding:10px 14px;font-size:14px;font-weight:600;cursor:pointer;margin-top:10px}
+  button:hover{background:var(--morado2)}
+  button.sec{background:#fff;color:var(--morado);border:1px solid var(--morado)}
+  button.mini{padding:5px 9px;font-size:12px;margin:0}
+  button.danger{background:#fff;color:var(--err);border:1px solid var(--err);padding:5px 9px;font-size:12px;margin:0}
+  .tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+  .tabs button{background:#fff;color:var(--morado);border:1px solid var(--borde);margin:0}
+  .tabs button.active{background:var(--morado);color:#fff;border-color:var(--morado)}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+  th,td{text-align:left;padding:8px;border-bottom:1px solid var(--borde)}
+  th{color:var(--gris);font-weight:600;font-size:11px;text-transform:uppercase}
+  .pill{display:inline-block;background:var(--suave);border:1px solid var(--borde);border-radius:20px;padding:3px 10px;font-size:12px;margin:3px 3px 0 0}
+  .pill b{color:var(--morado)}
+  .msg{padding:10px 12px;border-radius:8px;font-size:13px;margin-top:10px;display:none}
+  .msg.ok{background:#e7f6ee;color:var(--ok);border:1px solid #b6e2c8;display:block}
+  .msg.err{background:#fdeceb;color:var(--err);border:1px solid #f4c4c0;display:block}
+  .msg.info{background:#eef2ff;color:#3730a3;border:1px solid #c7d2fe;display:block}
+  .hidden{display:none}
+  .muted{color:var(--gris);font-size:12px}
+  .who{font-size:13px}.who b{background:#ffffff33;padding:2px 8px;border-radius:20px}
+  .pro-chip{background:#43e08a;color:#063b20;font-weight:700;padding:2px 10px;border-radius:20px;font-size:12px;margin-left:6px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:720px){.grid2{grid-template-columns:1fr}}
+  footer{text-align:center;color:var(--gris);font-size:11px;padding:20px}
+
+  /* --- Suscripción: estado PRO bien visible --- */
+  #suscCard.pro{border-color:#b6e2c8;background:#f3fbf6}
+  .pro-banner{background:#e7f6ee;color:var(--ok);border:1px solid #b6e2c8;border-radius:10px;padding:14px 16px;font-size:16px;font-weight:700;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .pro-banner .tag{font-size:12px;font-weight:700;background:#12813f;color:#fff;padding:3px 9px;border-radius:20px}
+  .plan-free{font-size:15px}
+  .plan-free b{color:var(--morado)}
+
+  /* --- Modal (ventana emergente) --- */
+  .modal-bg{position:fixed;inset:0;background:#1a1a1aaa;display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
+  .modal-bg.show{display:flex}
+  .modal{background:#fff;border-radius:14px;padding:24px;max-width:470px;width:100%;position:relative;box-shadow:0 20px 50px #0003;animation:pop .15s ease-out}
+  @keyframes pop{from{transform:scale(.96);opacity:.4}to{transform:scale(1);opacity:1}}
+  .modal h2{color:var(--oscuro);font-size:19px;margin:0 0 12px}
+  .modal-x{position:absolute;top:10px;right:12px;background:none;border:0;color:var(--gris);font-size:24px;line-height:1;cursor:pointer;margin:0;padding:0;width:30px;height:30px}
+  .modal-x:hover{background:none;color:var(--texto)}
+  .badge{display:inline-block;padding:4px 11px;border-radius:20px;font-size:12px;font-weight:700;margin-bottom:12px}
+  .badge-ia{background:#efe9fe;color:var(--morado);border:1px solid #d9ccfa}
+  .badge-sim{background:#fff4e0;color:#9a6700;border:1px solid #f3dca0}
+  .msgbox{background:var(--suave);border:1px solid var(--borde);border-left:4px solid var(--morado);border-radius:8px;padding:14px;font-size:15px;line-height:1.55;white-space:pre-wrap;margin-bottom:6px}
+  .modal .center{text-align:center}
+  .modal .big{font-size:52px;line-height:1}
+</style>
+</head>
+<body>
+<header>
+  <h1>✂️ AgendaFácil</h1>
+  <span id="who" class="who"></span>
+  <span class="sp"></span>
+  <span class="api">
+    <span id="dot" class="dot"></span> API
+    <input id="apiBase" value="http://localhost:3000" />
+  </span>
+  <button id="btnLogout" class="sec mini hidden" onclick="logout()">Salir</button>
+</header>
+
+<div class="wrap">
+
+  <!-- AUTENTICACIÓN -->
+  <div id="authView">
+    <div class="grid2">
+      <div class="card">
+        <h2>Crear cuenta</h2>
+        <label>Nombre</label><input id="rNombre" value="Don Pepe" />
+        <label>Email</label><input id="rEmail" value="pepe@barberia.com" />
+        <label>Contraseña (mín. 8)</label><input id="rPass" type="password" value="clave1234" />
+        <button onclick="registrar()">Registrarme</button>
+        <div id="rMsg" class="msg"></div>
+        <p class="muted">Todo el que se registra nace como CLIENTE. Al crear un negocio te vuelves DUEÑO.</p>
+      </div>
+      <div class="card">
+        <h2>Iniciar sesión</h2>
+        <label>Email</label><input id="lEmail" value="pepe@barberia.com" />
+        <label>Contraseña</label><input id="lPass" type="password" value="clave1234" />
+        <button onclick="login()">Entrar</button>
+        <div id="lMsg" class="msg"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- APP -->
+  <div id="appView" class="hidden">
+    <div class="tabs">
+      <button id="tab-negocio" class="active" onclick="showTab('negocio')">🏪 Mi negocio (dueño)</button>
+      <button id="tab-reservar" onclick="showTab('reservar')">📅 Reservar (cliente)</button>
+      <button id="tab-mias" onclick="showTab('mias')">🗓️ Mis citas</button>
+    </div>
+
+    <!-- PANEL DUEÑO -->
+    <div id="pane-negocio">
+      <div class="card">
+        <h2>Mis negocios</h2>
+        <div id="negociosLista" class="muted">Cargando…</div>
+        <h3>Crear un negocio nuevo</h3>
+        <div class="row">
+          <div><label>Nombre</label><input id="nNombre" value="Barbería Don Pepe" /></div>
+          <div><label>Teléfono</label><input id="nTel" value="3001234567" /></div>
+        </div>
+        <label>Descripción</label><input id="nDesc" value="Cortes clásicos y barba" />
+        <button onclick="crearNegocio()">Crear negocio</button>
+        <div id="nMsg" class="msg"></div>
+      </div>
+
+      <div id="negocioAdmin" class="hidden">
+        <div class="card">
+          <h2>Administrando: <span id="adminNombre" style="color:var(--morado)"></span><span id="adminPro" class="pro-chip hidden">✨ PRO</span></h2>
+
+          <h3>Horarios (configuración)</h3>
+          <div class="row">
+            <div><label>Apertura</label><input id="cAp" placeholder="09:00" /></div>
+            <div><label>Cierre</label><input id="cCi" placeholder="18:00" /></div>
+            <div><label>Duración por defecto (min)</label><input id="cDur" type="number" /></div>
+          </div>
+          <button class="sec" onclick="guardarConfig()">Guardar horarios</button>
+          <div id="cMsg" class="msg"></div>
+        </div>
+
+        <div class="grid2">
+          <div class="card">
+            <h2>Servicios</h2>
+            <div id="serviciosLista" class="muted">—</div>
+            <h3>Nuevo servicio</h3>
+            <label>Nombre</label><input id="sNombre" value="Corte clásico" />
+            <div class="row">
+              <div><label>Duración (min)</label><input id="sDur" type="number" value="30" /></div>
+              <div><label>Precio</label><input id="sPre" type="number" value="25000" /></div>
+            </div>
+            <button onclick="crearServicio()">Agregar servicio</button>
+            <div id="sMsg" class="msg"></div>
+          </div>
+
+          <div class="card">
+            <h2>Profesionales</h2>
+            <div id="profesLista" class="muted">—</div>
+            <h3>Nuevo profesional</h3>
+            <label>Nombre</label><input id="pNombre" value="Luis" />
+            <label>Especialidad</label><input id="pEsp" value="Fade" />
+            <button onclick="crearProfesional()">Agregar profesional</button>
+            <div id="pMsg" class="msg"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>¿Qué servicio hace cada profesional? (relación N:M)</h2>
+          <label>Profesional</label>
+          <select id="asgProf" onchange="cargarAsignaciones()"></select>
+          <div id="asgActual" class="muted" style="margin-top:10px">—</div>
+          <h3>Asignar un servicio</h3>
+          <div class="row">
+            <div><select id="asgServ"></select></div>
+            <div style="flex:0"><button class="mini" onclick="asignarServicio()">Asignar</button></div>
+          </div>
+          <div id="asgMsg" class="msg"></div>
+        </div>
+
+        <div class="card" id="suscCard">
+          <h2>Suscripción</h2>
+          <div id="suscripcion" class="muted">—</div>
+          <div id="suscMsg" class="msg"></div>
+        </div>
+
+        <div class="card">
+          <h2>Agenda del negocio</h2>
+          <button class="sec mini" id="btnRefAgenda" onclick="refrescarAgenda()">Refrescar</button>
+          <div id="agenda">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANEL CLIENTE -->
+    <div id="pane-reservar" class="hidden">
+      <div class="card">
+        <h2>Reservar una cita</h2>
+        <p class="muted">Escribe el número del negocio donde quieres reservar (ej. 1) y carga su catálogo.</p>
+        <div class="row">
+          <div><label>N° de negocio</label><input id="cbNeg" type="number" value="1" /></div>
+          <div style="flex:0"><button class="mini" onclick="cargarCatalogo()">Cargar catálogo</button></div>
+        </div>
+        <div id="cbMsg" class="msg"></div>
+      </div>
+      <div id="catalogo" class="card hidden">
+        <h2 id="catNombre"></h2>
+        <label>Servicio</label>
+        <select id="cbServ" onchange="filtrarProfes()"></select>
+        <label>Profesional (solo los que ofrecen ese servicio)</label>
+        <select id="cbProf"></select>
+        <label>Fecha y hora</label>
+        <input id="cbFecha" type="datetime-local" />
+        <button onclick="reservar()">Reservar cita</button>
+        <div id="cbResMsg" class="msg"></div>
+      </div>
+    </div>
+
+    <!-- MIS CITAS -->
+    <div id="pane-mias" class="hidden">
+      <div class="card">
+        <h2>Mis citas (como cliente)</h2>
+        <button class="sec mini" onclick="cargarMias()">Refrescar</button>
+        <div id="mias">—</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL reutilizable (mensaje de IA, confirmación de pago, avisos) -->
+<div id="modal" class="modal-bg">
+  <div class="modal">
+    <button class="modal-x" onclick="cerrarModal()">&times;</button>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<footer>© 2026 AgendaFácil</footer>
+
+<script>
+let token = null, yo = null, negocioActivo = null, catalogoActual = null;
+
+const $ = id => document.getElementById(id);
+const apiBase = () => $('apiBase').value.replace(/\/$/, '');
+
+function msg(id, texto, tipo){ const e=$(id); e.textContent=texto; e.className='msg '+(tipo===true?'ok':tipo===false?'err':tipo); }
+function limpiar(id){ const e=$(id); e.className='msg'; e.textContent=''; }
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+// ---------- MODAL ----------
+function abrirModal(html){ $('modalBody').innerHTML = html; $('modal').classList.add('show'); }
+function cerrarModal(){ $('modal').classList.remove('show'); }
+// Resalta un instante un elemento, para que se vea que una acción tuvo efecto.
+function flash(el){ if(!el) return; el.style.transition='box-shadow .2s'; el.style.boxShadow='0 0 0 3px #6018F055'; setTimeout(()=>{ el.style.boxShadow=''; }, 800); }
+$('modal').addEventListener('click', e=>{ if(e.target.id==='modal') cerrarModal(); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') cerrarModal(); });
+function copiarMsg(ev){
+  const t = $('msgTexto') ? $('msgTexto').textContent : '';
+  try{ navigator.clipboard.writeText(t); }catch(e){}
+  const b = ev.target; const o=b.textContent; b.textContent='¡Copiado! ✓';
+  setTimeout(()=>{ b.textContent=o; }, 1300);
+}
+
+async function api(path, {method='GET', body=null, auth=true}={}){
+  const headers = {'Content-Type':'application/json'};
+  if(auth && token) headers['Authorization'] = 'Bearer '+token;
+  let res;
+  try{
+    res = await fetch(apiBase()+path, {method, headers, body: body?JSON.stringify(body):null});
+  }catch(e){
+    $('dot').className='dot off';
+    throw {mensaje:'No se pudo conectar con el backend. ¿Está corriendo en '+apiBase()+'?'};
+  }
+  $('dot').className='dot on';
+  let data=null; try{ data=await res.json(); }catch(e){}
+  if(!res.ok){
+    const m = data && data.message ? (Array.isArray(data.message)?data.message.join(' · '):data.message) : ('Error '+res.status);
+    throw {mensaje:m, status:res.status};
+  }
+  return data;
+}
+
+// ---------- AUTH ----------
+async function registrar(){
+  limpiar('rMsg');
+  try{
+    const u = await api('/auth/register',{method:'POST',auth:false,body:{
+      nombre:$('rNombre').value, email:$('rEmail').value, password:$('rPass').value
+    }});
+    msg('rMsg','Cuenta creada ('+u.rol+'). Ahora inicia sesión.',true);
+    $('lEmail').value=$('rEmail').value; $('lPass').value=$('rPass').value;
+  }catch(e){ msg('rMsg',e.mensaje,false); }
+}
+
+async function login(){
+  limpiar('lMsg');
+  try{
+    const r = await api('/auth/login',{method:'POST',auth:false,body:{
+      email:$('lEmail').value, password:$('lPass').value
+    }});
+    token = r.access_token;
+    yo = await api('/perfil');
+    entrar();
+  }catch(e){ msg('lMsg',e.mensaje,false); }
+}
+
+function logout(){ detenerPolling(); token=null; yo=null; negocioActivo=null; $('appView').classList.add('hidden'); $('authView').classList.remove('hidden'); $('btnLogout').classList.add('hidden'); $('who').textContent=''; }
+
+function entrar(){
+  $('authView').classList.add('hidden');
+  $('appView').classList.remove('hidden');
+  $('btnLogout').classList.remove('hidden');
+  $('who').innerHTML = 'Hola, <b>'+yo.nombre+'</b> · rol: '+yo.rol;
+  showTab('negocio');
+  cargarNegocios();
+}
+
+// ---------- TABS ----------
+function showTab(t){
+  ['negocio','reservar','mias'].forEach(x=>{
+    $('pane-'+x).classList.toggle('hidden', x!==t);
+    $('tab-'+x).classList.toggle('active', x===t);
+  });
+  if(t==='mias') cargarMias();
+}
+
+// ---------- DUEÑO ----------
+async function cargarNegocios(){
+  try{
+    const negs = await api('/negocios');
+    if(!negs.length){ $('negociosLista').textContent='Todavía no tienes negocios. Crea uno abajo.'; $('negocioAdmin').classList.add('hidden'); return; }
+    $('negociosLista').innerHTML = negs.map(n=>
+      '<span class="pill"><b>#'+n.id+'</b> '+n.nombre+' <button class="mini" onclick="administrar('+n.id+",'"+n.nombre.replace(/'/g,"")+"'"+')">Administrar</button></span>'
+    ).join('');
+    if(!negocioActivo) administrar(negs[0].id, negs[0].nombre);
+  }catch(e){ $('negociosLista').textContent=e.mensaje; }
+}
+
+async function crearNegocio(){
+  limpiar('nMsg');
+  try{
+    const n = await api('/negocios',{method:'POST',body:{
+      nombre:$('nNombre').value, descripcion:$('nDesc').value, telefono:$('nTel').value
+    }});
+    msg('nMsg','Negocio #'+n.id+' creado. ¡Ya eres DUEÑO! (vuelve a iniciar sesión para ver tu rol actualizado)',true);
+    yo = await api('/perfil'); $('who').innerHTML='Hola, <b>'+yo.nombre+'</b> · rol: '+yo.rol;
+    cargarNegocios();
+  }catch(e){ msg('nMsg',e.mensaje,false); }
+}
+
+async function administrar(id, nombre){
+  detenerPolling();
+  negocioActivo = id;
+  const panel = $('negocioAdmin');
+  panel.classList.remove('hidden');
+  $('adminNombre').textContent = nombre+' (#'+id+')';
+  // Feedback visible: baja al panel del negocio y lo resalta un momento.
+  panel.scrollIntoView({ behavior:'smooth', block:'start' });
+  flash(panel);
+  try{
+    const c = await api('/negocios/'+id+'/configuracion');
+    $('cAp').value=c.horaApertura; $('cCi').value=c.horaCierre; $('cDur').value=c.duracionDefault;
+  }catch(e){}
+  cargarServicios(); cargarProfesionales(); cargarAgenda(); cargarSuscripcion();
+}
+
+// ---------- SUSCRIPCIÓN (estado PRO bien visible) ----------
+async function cargarSuscripcion(){
+  try{
+    const s = await api('/negocios/'+negocioActivo+'/suscripcion');
+    const pro = s && s.plan==='PRO';
+    $('suscCard').classList.toggle('pro', pro);
+    $('adminPro').classList.toggle('hidden', !pro);
+    if(pro){
+      const hasta = s.vigenteHasta ? ' · vigente hasta '+fmt(s.vigenteHasta) : '';
+      $('suscripcion').innerHTML =
+        '<div class="pro-banner">✨ Plan PRO activo <span class="tag">IA DESBLOQUEADA</span></div>'+
+        '<p class="muted">Ya puedes generar el mensaje de confirmación con IA desde la agenda'+hasta+'.</p>';
+    }else{
+      $('suscripcion').innerHTML =
+        '<p class="plan-free">Plan actual: <b>FREE</b> — la IA está bloqueada (da 402 si la intentas).</p>'+
+        '<button onclick="hazmePro()">Hazte PRO 💜</button> '+
+        '<button class="sec" onclick="verificarPago()">Ya pagué — verificar</button>'+
+        '<p class="muted">Paga con la tarjeta de prueba <b>4242 4242 4242 4242</b> (fecha futura, CVC y código postal cualquiera). El plan sube a PRO cuando Stripe confirma el pago por el webhook.</p>';
+    }
+    return pro;
+  }catch(e){ $('suscripcion').textContent=e.mensaje; return false; }
+}
+
+async function hazmePro(){
+  limpiar('suscMsg');
+  try{
+    const r = await api('/negocios/'+negocioActivo+'/suscripcion/checkout',{method:'POST'});
+    if(r && r.url){
+      msg('suscMsg','Abrí la página de pago de Stripe en otra pestaña. Paga ahí; aquí te aviso apenas se confirme… ⏳','info');
+      window.open(r.url,'_blank');
+      iniciarPollingPago();
+    } else {
+      msg('suscMsg','No se recibió la URL de pago. ¿Configuraste STRIPE_SECRET_KEY?',false);
+    }
+  }catch(e){ msg('suscMsg',e.mensaje,false); }
+}
+
+// Revisa cada 3s si el pago ya subió el plan a PRO (máx ~2 min).
+let pagoTimer=null, pagoIntentos=0;
+function iniciarPollingPago(){
+  detenerPolling(); pagoIntentos=0;
+  pagoTimer = setInterval(async ()=>{
+    pagoIntentos++;
+    const pro = await cargarSuscripcion();
+    if(pro){ detenerPolling(); limpiar('suscMsg'); celebrarPro(); }
+    else if(pagoIntentos>=40){ detenerPolling(); msg('suscMsg','No se ha confirmado el pago todavía. Cuando pagues, usa "Ya pagué — verificar".','info'); }
+  }, 3000);
+}
+function detenerPolling(){ if(pagoTimer){ clearInterval(pagoTimer); pagoTimer=null; } }
+
+async function verificarPago(){
+  limpiar('suscMsg');
+  const pro = await cargarSuscripcion();
+  if(pro) celebrarPro();
+  else msg('suscMsg','Aún no se confirma el pago. Si acabas de pagar, espera unos segundos y vuelve a verificar.','info');
+}
+
+function celebrarPro(){
+  abrirModal(
+    '<div class="center">'+
+      '<div class="big">🎉</div>'+
+      '<h2 style="color:var(--ok)">¡Pago confirmado!</h2>'+
+      '<p>Tu negocio ahora es <b>PRO</b>.<br>La función de <b>mensaje con IA</b> quedó desbloqueada.</p>'+
+      '<button class="sec" onclick="cerrarModal()">Listo</button>'+
+    '</div>'
+  );
+}
+
+async function generarMensajeIA(citaId){
+  try{
+    const r = await api('/negocios/'+negocioActivo+'/citas/'+citaId+'/mensaje-ia');
+    const esIA = r.modo==='ia';
+    abrirModal(
+      '<h2>Mensaje de confirmación</h2>'+
+      '<span class="badge '+(esIA?'badge-ia':'badge-sim')+'">'+(esIA?'✨ Generado con IA':'📝 Ejemplo (modo simulado)')+'</span>'+
+      '<div class="msgbox" id="msgTexto">'+escapeHtml(r.mensaje)+'</div>'+
+      '<p class="muted">'+(esIA
+        ? 'Texto generado por la IA (Gemini) para enviar al cliente.'
+        : 'La IA no estaba disponible en este momento, así que mostramos un mensaje de ejemplo. La app no se cae por esto.')+'</p>'+
+      '<button onclick="copiarMsg(event)">📋 Copiar</button> '+
+      '<button class="sec" onclick="cerrarModal()">Cerrar</button>'
+    );
+  }catch(e){
+    if(e.status===402){
+      abrirModal('<h2>Función PRO 🔒</h2><p>Generar el mensaje con IA es parte del plan <b>PRO</b>.</p>'+
+        '<p class="muted">Ve a la tarjeta <b>Suscripción</b> y usa <b>Hazte PRO</b> para desbloquearla.</p>'+
+        '<button class="sec" onclick="cerrarModal()">Entendido</button>');
+    }else if(e.status===429){
+      abrirModal('<h2>Demasiados mensajes ⏳</h2><p>Alcanzaste el límite de solicitudes de IA por minuto (la IA cuesta por uso).</p>'+
+        '<p class="muted">Espera un momento y vuelve a intentar.</p>'+
+        '<button class="sec" onclick="cerrarModal()">Entendido</button>');
+    }else{
+      abrirModal('<h2>No se pudo generar</h2><p>'+escapeHtml(e.mensaje)+'</p><button class="sec" onclick="cerrarModal()">Cerrar</button>');
+    }
+  }
+}
+
+async function guardarConfig(){
+  limpiar('cMsg');
+  try{
+    await api('/negocios/'+negocioActivo+'/configuracion',{method:'PATCH',body:{
+      horaApertura:$('cAp').value, horaCierre:$('cCi').value, duracionDefault:Number($('cDur').value)
+    }});
+    msg('cMsg','Horarios guardados.',true);
+  }catch(e){ msg('cMsg',e.mensaje,false); }
+}
+
+async function cargarServicios(){
+  try{
+    const s = await api('/negocios/'+negocioActivo+'/servicios');
+    $('serviciosLista').innerHTML = s.length ? s.map(x=>'<span class="pill"><b>#'+x.id+'</b> '+x.nombre+' · '+x.duracionMin+'min · $'+x.precio+'</span>').join('') : '<span class="muted">Sin servicios aún.</span>';
+    $('asgServ').innerHTML = s.map(x=>'<option value="'+x.id+'">#'+x.id+' '+x.nombre+'</option>').join('');
+  }catch(e){ $('serviciosLista').textContent=e.mensaje; }
+}
+
+async function crearServicio(){
+  limpiar('sMsg');
+  try{
+    await api('/negocios/'+negocioActivo+'/servicios',{method:'POST',body:{
+      nombre:$('sNombre').value, duracionMin:Number($('sDur').value), precio:Number($('sPre').value)
+    }});
+    msg('sMsg','Servicio agregado.',true); cargarServicios();
+  }catch(e){ msg('sMsg',e.mensaje,false); }
+}
+
+async function cargarProfesionales(){
+  try{
+    const p = await api('/negocios/'+negocioActivo+'/profesionales');
+    $('profesLista').innerHTML = p.length ? p.map(x=>'<span class="pill"><b>#'+x.id+'</b> '+x.nombre+(x.especialidad?' · '+x.especialidad:'')+'</span>').join('') : '<span class="muted">Sin profesionales aún.</span>';
+    $('asgProf').innerHTML = p.map(x=>'<option value="'+x.id+'">#'+x.id+' '+x.nombre+'</option>').join('');
+    if(p.length) cargarAsignaciones();
+  }catch(e){ $('profesLista').textContent=e.mensaje; }
+}
+
+async function crearProfesional(){
+  limpiar('pMsg');
+  try{
+    await api('/negocios/'+negocioActivo+'/profesionales',{method:'POST',body:{
+      nombre:$('pNombre').value, especialidad:$('pEsp').value
+    }});
+    msg('pMsg','Profesional agregado.',true); cargarProfesionales();
+  }catch(e){ msg('pMsg',e.mensaje,false); }
+}
+
+async function cargarAsignaciones(){
+  const pid = $('asgProf').value; if(!pid) return;
+  try{
+    const s = await api('/profesionales/'+pid+'/servicios');
+    $('asgActual').innerHTML = s.length ? 'Ofrece: '+s.map(x=>'<span class="pill">'+x.nombre+' <button class="danger" onclick="quitarServicio('+pid+','+x.id+')">quitar</button></span>').join('') : '<span class="muted">Este profesional no ofrece ningún servicio aún.</span>';
+  }catch(e){ $('asgActual').textContent=e.mensaje; }
+}
+
+async function asignarServicio(){
+  limpiar('asgMsg');
+  try{
+    await api('/profesionales/'+$('asgProf').value+'/servicios',{method:'POST',body:{servicioId:Number($('asgServ').value)}});
+    msg('asgMsg','Servicio asignado.',true); cargarAsignaciones();
+  }catch(e){ msg('asgMsg',e.mensaje,false); }
+}
+
+async function quitarServicio(pid, sid){
+  try{ await api('/profesionales/'+pid+'/servicios/'+sid,{method:'DELETE'}); cargarAsignaciones(); }
+  catch(e){ msg('asgMsg',e.mensaje,false); }
+}
+
+async function cargarAgenda(){
+  try{
+    const c = await api('/negocios/'+negocioActivo+'/citas');
+    $('agenda').innerHTML = c.length ? tablaCitas(c, true) : '<p class="muted">No hay citas todavía.</p>';
+  }catch(e){ $('agenda').innerHTML='<p class="muted">'+e.mensaje+'</p>'; }
+}
+
+// Refresca la agenda con feedback visible en el botón.
+async function refrescarAgenda(){
+  const b = $('btnRefAgenda'); const original = b.textContent;
+  b.textContent = 'Actualizando…'; b.disabled = true;
+  await cargarAgenda();
+  flash($('agenda'));
+  b.textContent = '✓ Actualizada'; b.disabled = false;
+  setTimeout(()=>{ b.textContent = original; }, 1300);
+}
+
+function tablaCitas(c, conCliente){
+  return '<table><tr><th>Fecha</th>'+(conCliente?'<th>Cliente</th>':'<th>Negocio</th>')+'<th>Servicio</th><th>Profesional</th><th>Estado</th>'+(conCliente?'<th>IA</th>':'')+'</tr>'+
+    c.map(x=>'<tr><td>'+fmt(x.fecha)+'</td><td>'+(conCliente?x.cliente.nombre:x.negocio.nombre)+'</td><td>'+x.servicio.nombre+'</td><td>'+x.profesional.nombre+'</td><td>'+x.estado+'</td>'+(conCliente?'<td><button class="mini" onclick="generarMensajeIA('+x.id+')">✨ Mensaje</button></td>':'')+'</tr>').join('')+'</table>';
+}
+function fmt(iso){ const d=new Date(iso); return d.toLocaleString('es-CO',{dateStyle:'medium',timeStyle:'short'}); }
+
+// ---------- CLIENTE ----------
+async function cargarCatalogo(){
+  limpiar('cbMsg');
+  try{
+    const cat = await api('/negocios/'+$('cbNeg').value+'/catalogo',{auth:false});
+    catalogoActual = cat;
+    $('catalogo').classList.remove('hidden');
+    $('catNombre').textContent = cat.negocio.nombre+' — reservar';
+    $('cbServ').innerHTML = cat.servicios.map(s=>'<option value="'+s.id+'">'+s.nombre+' ('+s.duracionMin+'min · $'+s.precio+')</option>').join('');
+    filtrarProfes();
+    if(!cat.servicios.length) msg('cbMsg','Este negocio aún no tiene servicios.',false);
+  }catch(e){ $('catalogo').classList.add('hidden'); msg('cbMsg',e.mensaje,false); }
+}
+
+function filtrarProfes(){
+  if(!catalogoActual) return;
+  const sid = Number($('cbServ').value);
+  const aptos = catalogoActual.profesionales.filter(p=>p.servicioIds.includes(sid));
+  $('cbProf').innerHTML = aptos.length ? aptos.map(p=>'<option value="'+p.id+'">'+p.nombre+(p.especialidad?' · '+p.especialidad:'')+'</option>').join('') : '<option value="">— ningún profesional ofrece este servicio —</option>';
+}
+
+async function reservar(){
+  limpiar('cbResMsg');
+  const pid = $('cbProf').value;
+  if(!pid){ msg('cbResMsg','Elige un profesional que ofrezca el servicio.',false); return; }
+  const fechaLocal = $('cbFecha').value;
+  if(!fechaLocal){ msg('cbResMsg','Elige fecha y hora.',false); return; }
+  try{
+    const cita = await api('/negocios/'+$('cbNeg').value+'/citas',{method:'POST',body:{
+      servicioId:Number($('cbServ').value),
+      profesionalId:Number(pid),
+      fecha:new Date(fechaLocal).toISOString()
+    }});
+    msg('cbResMsg','¡Cita reservada! (#'+cita.id+', '+cita.estado+')',true);
+  }catch(e){ msg('cbResMsg',e.mensaje,false); }
+}
+
+// ---------- MIS CITAS ----------
+async function cargarMias(){
+  try{
+    const c = await api('/mis-citas');
+    $('mias').innerHTML = c.length ? tablaCitas(c, false) : '<p class="muted">Todavía no has reservado ninguna cita.</p>';
+  }catch(e){ $('mias').innerHTML='<p class="muted">'+e.mensaje+'</p>'; }
+}
+</script>
+</body>
+</html>

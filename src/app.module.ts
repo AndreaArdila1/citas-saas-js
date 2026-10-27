@@ -8,7 +8,7 @@ import { ServiciosModule } from './servicios/servicios.module';
 import { CitasModule } from './citas/citas.module';
 import { ConfiguracionModule } from './configuracion/configuracion.module';
 import { SuscripcionesModule } from './suscripciones/suscripciones.module';
-// import { AsistenteIaModule } from './asistente-ia/asistente-ia.module';
+import { AsistenteIaModule } from './asistente-ia/asistente-ia.module';
 
 @Module({
   imports: [
@@ -26,7 +26,7 @@ import { SuscripcionesModule } from './suscripciones/suscripciones.module';
     CitasModule,
     // Esqueleto — se construyen en C3
     SuscripcionesModule,
-    // AsistenteIaModule,
+    AsistenteIaModule,
   ],
 })
 export class AppModule {}
